@@ -1,0 +1,40 @@
+name: update
+on:
+  push:
+    branches: [main]
+  schedule:
+    # UTC; Bucharest is UTC+3 (summer) / UTC+2 (winter). Results nights Thu+Sun, plus a daily run.
+    - cron: "*/15 16-21 * * 0,4"
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency: update
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      # ponytail: tickets live in a secret so they stay out of the public repo
+      - if: github.event_name != 'push'
+        run: '[ -n "$TICKETS_JSON" ] && echo "$TICKETS_JSON" > tickets.json || true'
+        env: { TICKETS_JSON: "${{ secrets.TICKETS_JSON }}" }
+      - if: github.event_name != 'push'
+        run: python3 loto.py update
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+      - if: github.event_name != 'push'
+        run: |
+          git config user.name github-actions && git config user.email github-actions@users.noreply.github.com
+          git add data.json loto.db
+          git diff --cached --quiet || (git commit -m "update" && git push)
+      # deploy here: pushes made with GITHUB_TOKEN don't trigger other workflows
+      - run: mkdir _site && cp index.html data.json _site/
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: _site }
+      - uses: actions/deploy-pages@v4

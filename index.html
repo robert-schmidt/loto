@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loto Odds</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap">
+<style>
+:root {
+  --paper: #F2F4F1; --sheet: #FFFFFF; --ink: #17211B; --muted: #5C6A61; --rule: #D3DAD4;
+  --blue: #1A3D8F; --yellow: #F2C30F; --red: #C8102E; --cold: #6B7F8F;
+  --game: var(--blue); --on-game: #fff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper: #121815; --sheet: #1A221E; --ink: #E6ECE7; --muted: #94A39A; --rule: #2E3933; --cold: #8FA3B3; }
+}
+:root[data-theme="dark"] { --paper: #121815; --sheet: #1A221E; --ink: #E6ECE7; --muted: #94A39A; --rule: #2E3933; --cold: #8FA3B3; }
+body[data-game="540"] { --game: var(--yellow); --on-game: #17211B; }
+body[data-game="joker"] { --game: var(--red); }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 16px/1.5 Archivo, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums; }
+main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 80px; }
+h1, h2, h3 { font-stretch: 112%; line-height: 1.1; margin: 0; }
+h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; }
+p { margin: 0; max-width: 68ch; }
+.muted { color: var(--muted); }
+section { margin-top: 64px; }
+section > .lede { color: var(--muted); margin-bottom: 20px; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--game); outline-offset: 2px; }
+
+/* game switch */
+nav { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+nav button { display: flex; align-items: center; gap: 10px; padding: 6px 16px 6px 6px; border-radius: 999px;
+  border: 1px solid var(--rule); background: var(--sheet); cursor: pointer; font-weight: 600; }
+nav button[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+nav .dot { width: 26px; height: 26px; border-radius: 50%; }
+nav .when { margin-left: auto; color: var(--muted); font-size: .9rem; }
+
+/* balls: the one loud thing */
+.ball { --c: var(--game); --t: var(--on-game); width: var(--s, 56px); height: var(--s, 56px); border-radius: 50%;
+  display: inline-grid; place-items: center; flex: none; color: var(--t);
+  font: 800 calc(var(--s, 56px) * .4)/1 Archivo, sans-serif; font-stretch: 125%;
+  background: radial-gradient(circle at 32% 28%, rgb(255 255 255 / .55), transparent 38%),
+              radial-gradient(circle at 50% 50%, var(--c) 58%, color-mix(in oklab, var(--c), #000 35%));
+  box-shadow: 0 2px 0 rgb(0 0 0 / .08); }
+.ball.extra { --c: var(--ink); --t: var(--paper); }
+.ball.dim { opacity: .35; }
+.balls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* hero */
+.hero { margin-top: 40px; display: grid; gap: 28px; }
+.hero h1 { font-size: clamp(2rem, 5.5vw, 3.6rem); font-weight: 900; letter-spacing: -.01em; max-width: 18ch; }
+.tickets { display: grid; gap: 14px; }
+.ticket { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding: 14px 18px; background: var(--sheet);
+  border-radius: 18px 4px 18px 4px; border: 1px solid var(--rule); }
+.ticket .why { font-size: .85rem; color: var(--muted); margin-left: auto; }
+.count { display: flex; gap: 8px; align-items: center; color: var(--muted); }
+.count select { padding: 4px 8px; border-radius: 8px; border: 1px solid var(--rule); background: var(--sheet); }
+.ticket .rank { font-weight: 800; font-stretch: 112%; color: var(--muted); min-width: 2.2em; }
+.count input { width: 5em; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--rule); background: var(--sheet); }
+.saved { margin-top: -12px; font-size: .9rem; }
+.ticket .facts2 { display: flex; gap: 4px 18px; flex-wrap: wrap; font-size: .85rem; color: var(--muted); flex-basis: 100%; padding-left: calc(2.2em + 16px); margin-top: -6px; }
+.ticket .facts2 b { color: var(--ink); font-weight: 700; }
+details { border-top: 1px solid var(--rule); padding: 12px 0; }
+details summary { cursor: pointer; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+details .draws { margin-top: 12px; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.chips span { padding: 4px 10px; border-radius: 999px; background: var(--sheet); border: 1px solid var(--rule); font-size: .9rem; }
+.best { background: var(--sheet); border: 2px solid var(--ink); border-radius: 28px 6px 28px 6px; padding: 24px; display: grid; gap: 18px; }
+.best .balls { --s: 76px; gap: 12px; }
+.best .ball { --s: 76px; }
+.best h2 { font-size: 1.1rem; font-weight: 700; color: var(--muted); }
+.best .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px 28px; }
+.best .stats b { display: block; font-size: 1.5rem; font-weight: 800; font-stretch: 95%; line-height: 1.15; }
+.best .stats span { color: var(--muted); font-size: .9rem; }
+.why-box { max-width: 68ch; display: grid; gap: 10px; }
+.why-box h3 { font-size: 1.15rem; }
+.why-box .compare { display: grid; grid-template-columns: auto 1fr auto; gap: 8px 12px; align-items: center; font-size: .9rem; margin-top: 4px; }
+.why-box .compare i { height: 12px; border-radius: 6px; background: var(--game); display: block; }
+.why-box .compare i.lo { background: var(--cold); }
+.bundle { display: flex; gap: 12px 24px; flex-wrap: wrap; color: var(--muted); }
+.bundle input, .bundle select { margin-left: 6px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--rule); background: var(--sheet); width: auto; }
+.bundle input { width: 5em; }
+.outcome-head { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px 28px; margin: 22px 0 26px; }
+.outcome-head b { display: block; font-size: 1.6rem; font-weight: 800; font-stretch: 95%; line-height: 1.15; }
+.outcome-head span { color: var(--muted); font-size: .9rem; }
+.spread { display: grid; grid-template-columns: minmax(150px, max-content) 1fr max-content; gap: 10px 14px; align-items: center; max-width: 760px; }
+.spread .lab { font-size: .92rem; }
+.spread .lab small { display: block; color: var(--muted); font-size: .8rem; }
+.spread .track { position: relative; height: 18px; }
+.spread .track i { position: absolute; left: 0; top: 0; bottom: 0; min-width: 2px; background: var(--game); border-radius: 0 4px 4px 0; }
+.spread .pct { text-align: right; font-weight: 700; }
+.spread .row { display: contents; }
+.spread .row:hover .track i { filter: brightness(1.15); }
+.spread .row.ahead .lab { font-weight: 700; }
+@media (max-width: 760px) { .spread { grid-template-columns: 1fr max-content; } .spread .track { grid-column: 1 / -1; order: 0; } }
+.lab-steps { display: grid; grid-template-columns: max-content 1fr max-content; gap: 8px 12px; align-items: center; font-size: .9rem; max-width: 560px; }
+.lab-steps i { height: 12px; border-radius: 0 4px 4px 0; background: var(--game); display: block; }
+.lab-steps i.test { background: var(--ink); }
+.formulas { margin: 0; padding-left: 1.2em; font-size: .92rem; }
+.truth { border-left: 4px solid var(--game); padding: 4px 0 4px 16px; }
+
+/* numbers row */
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 28px 32px; }
+.fact b { display: block; font-size: 2rem; font-weight: 800; font-stretch: 90%; line-height: 1.1; }
+.fact span { color: var(--muted); font-size: .9rem; }
+.meter { height: 10px; background: var(--rule); border-radius: 5px; margin-top: 10px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--game); }
+
+/* slip board */
+.board { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; max-width: 640px; }
+.board button { aspect-ratio: 1.15; border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; padding: 4px;
+  display: grid; place-items: center; line-height: 1; background: var(--cell, var(--sheet)); }
+.board button b { font-size: 1.15rem; font-stretch: 110%; }
+.board button small { font-size: .65rem; color: var(--muted); }
+.board button[aria-pressed="true"] { outline: 3px solid var(--ink); outline-offset: -2px; }
+.boardwrap { display: grid; grid-template-columns: minmax(0, 640px) minmax(220px, 1fr); gap: 32px; align-items: start; }
+.detail dl { display: grid; grid-template-columns: auto auto; gap: 6px 16px; margin: 12px 0 0; }
+.detail dt { color: var(--muted); } .detail dd { margin: 0; text-align: right; font-weight: 600; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; margin-bottom: 14px; }
+.seg button { border: 0; background: transparent; padding: 6px 14px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.legend { display: flex; gap: 10px; align-items: center; font-size: .8rem; color: var(--muted); margin-top: 10px; }
+.legend i { width: 90px; height: 10px; border-radius: 5px;
+  background: linear-gradient(90deg, color-mix(in oklab, var(--cold) 70%, var(--sheet)), var(--sheet), color-mix(in oklab, var(--game) 70%, var(--sheet))); }
+
+/* tables */
+table { border-collapse: collapse; width: 100%; font-stretch: 88%; }
+th { text-align: left; font-weight: 600; color: var(--muted); font-size: .85rem; padding: 0 12px 8px 0; }
+td { padding: 10px 12px 10px 0; border-top: 1px solid var(--rule); vertical-align: middle; }
+td.num, th.num { text-align: right; }
+.zero { position: relative; height: 12px; background: var(--rule); border-radius: 6px; min-width: 120px; }
+.zero::after { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--ink); }
+.zero i { position: absolute; top: 0; bottom: 0; border-radius: 6px; background: var(--game); }
+.zero i.neg { background: var(--cold); }
+
+.split { display: grid; gap: 8px; max-width: 560px; }
+.split div { display: grid; grid-template-columns: 90px 1fr 56px; gap: 12px; align-items: center; font-size: .9rem; }
+.split .bar { position: relative; height: 14px; }
+.split .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--game); border-radius: 3px; }
+.split .bar u { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); }
+
+.check { display: flex; gap: 10px; flex-wrap: wrap; }
+.check input { flex: 1 1 260px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--rule); background: var(--sheet); }
+.check button, .primary { padding: 12px 20px; border-radius: 10px; border: 0; background: var(--ink); color: var(--paper); font-weight: 700; cursor: pointer; }
+#checkOut { margin-top: 18px; }
+.err { color: var(--red); }
+
+.draws { display: grid; gap: 10px; }
+.draws .row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.draws time { width: 110px; color: var(--muted); font-size: .9rem; }
+.ann a { color: inherit; }
+.ann li { margin-bottom: 6px; }
+footer { margin-top: 80px; color: var(--muted); font-size: .85rem; }
+@media (max-width: 760px) {
+  .boardwrap { grid-template-columns: 1fr; }
+  .board button b { font-size: .95rem; } .board button small { display: none; }
+  .ball { --s: 38px; } .balls { gap: 6px; }
+  .best .ball { --s: 46px; } .best .balls { gap: 8px; }
+  .ticket .why { margin-left: 0; width: 100%; }
+  .ticket .facts2 { padding-left: 0; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hero .ticket .ball { animation: drop .5s cubic-bezier(.3, 1.5, .5, 1) backwards; animation-delay: calc(var(--i) * 60ms); }
+  @keyframes drop { from { transform: translateY(-28px) scale(.6); opacity: 0; } }
+}
+</style>
+</head>
+<body data-game="649">
+<main>
+  <nav id="nav" aria-label="Game"></nav>
+
+  <div class="hero">
+    <h1 id="headline">Loading the draw history…</h1>
+    <div class="best" id="best"></div>
+    <p class="muted saved" id="saved"></p>
+    <div class="why-box" id="why"></div>
+    <div>
+      <h2 style="font-size:1.2rem">More tickets</h2>
+      <div class="count" style="margin-top:10px"><label for="n">Tickets in total</label>
+        <input id="n" type="number" min="1" max="100" value="5">
+        <span id="cost"></span></div>
+    </div>
+    <div class="tickets" id="tickets"></div>
+    <p class="truth" id="truth"></p>
+  </div>
+
+  <section>
+    <h2>Play more numbers</h2>
+    <p class="lede" id="sysLede"></p>
+    <div class="tickets" id="sys"></div>
+  </section>
+
+  <section>
+    <h2>What a bundle really returns</h2>
+    <p class="lede">Pick a bundle and see what actually happens draw by draw, not just the average.</p>
+    <form class="bundle" id="bundle">
+      <label>Tickets <input id="bT" type="number" min="1" max="50" value="10"></label>
+      <label>Numbers on each <select id="bK"></select></label>
+      <label>Fill the lines as <select id="bM"><option value="system">system tickets</option><option value="spread">separate lines, spread out</option></select></label>
+    </form>
+    <p class="muted" id="bCompare" style="margin-top:14px;max-width:68ch"></p>
+    <div id="bOut"></div>
+  </section>
+
+  <section>
+    <h2>Next draw</h2>
+    <p class="lede" id="drawLede"></p>
+    <div class="facts" id="facts"></div>
+  </section>
+
+  <section>
+    <h2>Track record</h2>
+    <p class="lede" id="trackLede"></p>
+    <div style="overflow-x:auto"><table id="trackSum"></table></div>
+    <p class="muted" id="trackTrend" style="margin-top:12px"></p>
+    <div id="track" style="margin-top:20px"></div>
+    <div class="why-box" id="prereg" style="margin-top:28px"></div>
+    <div class="why-box" id="lab" style="margin-top:28px"></div>
+  </section>
+
+  <section>
+    <h2>What other players pick</h2>
+    <p class="lede" id="popLede"></p>
+    <div id="popTop"></div>
+  </section>
+
+  <section>
+    <h2>Every number, side by side</h2>
+    <p class="lede" id="boardLede"></p>
+    <div class="seg" role="group" aria-label="Period">
+      <button data-p="all" aria-pressed="true">All time</button><button data-p="recent" aria-pressed="false">Last 100 draws</button><button data-p="pop" aria-pressed="false">Player popularity</button>
+    </div>
+    <div class="boardwrap">
+      <div><div class="board" id="board"></div>
+        <div class="legend" id="legend"></div></div>
+      <div class="detail" id="detail"></div>
+    </div>
+    <div id="extraBoard"></div>
+  </section>
+
+  <section>
+    <h2>Can patterns predict the next draw?</h2>
+    <p class="lede" id="btLede"></p>
+    <div style="overflow-x:auto"><table id="bt"></table></div>
+    <p class="muted" id="btOos" style="margin-top:14px;max-width:68ch"></p>
+  </section>
+
+  <section>
+    <h2>Is the machine fair?</h2>
+    <p class="lede" id="fair"></p>
+    <h3 style="font-size:1.05rem;margin:24px 0 12px">Odd numbers per draw: seen vs. expected</h3>
+    <div class="split" id="split"></div>
+    <h3 style="font-size:1.05rem;margin:28px 0 8px">Most frequent pairs</h3>
+    <p class="muted" id="pairs"></p>
+  </section>
+
+  <section>
+    <h2>Check your numbers</h2>
+    <p class="lede" id="checkLede"></p>
+    <form class="check" id="check">
+      <input id="mine" inputmode="numeric" autocomplete="off" aria-label="Your numbers">
+      <button>Check against every draw</button>
+    </form>
+    <div id="checkOut"></div>
+  </section>
+
+  <section>
+    <h2>Latest draws</h2>
+    <div class="ann" id="ann"></div>
+    <div class="draws" id="draws"></div>
+  </section>
+
+  <footer id="foot"></footer>
+</main>
+
+<script>
+const GAMES = { "649": "var(--blue)", "540": "var(--yellow)", joker: "var(--red)" };
+const $ = s => document.querySelector(s);
+const fmt = (x, d = 0) => x.toLocaleString("ro-RO", { maximumFractionDigits: d, minimumFractionDigits: d });
+const lei = x => fmt(x, x < 100 ? 2 : 0) + " lei";
+const day = iso => new Date(iso).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+const ball = (n, cls = "", i = 0) => `<span class="ball ${cls}" style="--i:${i}">${n}</span>`;
+let D, key = localGet("game") || "649", period = "all", sel = null;
+
+function localGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+function localSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
+
+function category(k, hits, bonus) {   // mirrors model.prize_category
+  if (k === "649") return { 6: "I", 5: "II", 4: "III", 3: "IV" }[hits];
+  if (k === "540") return hits === 5 && bonus ? "I" : { 5: "II", 4: "III" }[hits];
+  return bonus ? { 5: "I", 4: "III", 3: "V", 2: "VII", 1: "VIII" }[hits] : { 5: "II", 4: "IV", 3: "VI" }[hits];
+}
+
+fetch("data.json", { cache: "no-store" }).then(r => r.json()).then(d => { D = d; if (!D.games[key]) key = "649"; render(); })
+  .catch(() => $("#headline").textContent = "No data yet. Run python3 loto.py backfill, then serve this folder over HTTP.");
+
+function render() {
+  const g = D.games[key];
+  document.body.dataset.game = key;
+  const next = D.next_draws[0];
+  $("#nav").innerHTML = Object.keys(GAMES).filter(k => D.games[k]).map(k => [k, D.games[k]]).map(([k, x]) =>
+    `<button data-k="${k}" aria-pressed="${k === key}"><span class="dot ball" style="--c:${GAMES[k]};--s:26px"></span>${x.name}</button>`).join("")
+    + `<span class="when">Data updated ${new Date(D.generated).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</span>`;
+  $("#nav").querySelectorAll("button").forEach(b => b.onclick = () => { key = b.dataset.k; sel = null; localSet("game", key); render(); });
+
+  // hero
+  $("#n").max = g.picks.length;
+  const n = Math.max(1, Math.min(g.picks.length, Math.round(+$("#n").value) || 5));
+  $("#headline").textContent = `Tickets for ${day(next)}`;
+  $("#cost").textContent = `${n} × ${g.price} lei = ${fmt(n * g.price)} lei, strongest first`;
+  best(g);
+  $("#saved").textContent = g.saved_at
+    ? `Saved ${new Date(g.saved_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })} for this draw. They will be scored against the result below.`
+    : `Provisional. These get saved for scoring once the latest results are in.`;
+  $("#tickets").innerHTML = g.picks.slice(1, n).map((t, i) => ticket(t, i + 1, g)).join("");
+  $("#truth").innerHTML = `Ranked by payback, strongest first. The first tickets share at most one number with each other, so a set covers more of the board.
+    The trend score is our experiment: how much a ticket leans on recently frequent numbers. It is saved with each pick, and the track record shows whether it means anything.`;
+
+  // next draw
+  const e = g.ev;
+  $("#drawLede").textContent = `${day(next)}, 18:30. Regular draws are every Thursday and Sunday; holiday double draws are announced below.`;
+  const top = g.picks[0] || {}, ours = top.ev ?? e?.ev_avg;
+  $("#facts").innerHTML = e ? `
+    <div class="fact"><b>${lei(e.jackpot)}</b><span>Expected jackpot: the rollover on loto.ro (${e.as_of}) plus this draw's typical share of sales</span></div>
+    <div class="fact"><b>${lei(ours)}</b><span>Average payback per ${e.price} lei for ticket #1, all prize categories (${lei(e.ev_avg)} for a typical ticket). Before tax.</span>
+      <div class="meter" role="img" aria-label="${Math.round(ours / e.price * 100)}% of ticket price"><i style="width:${Math.min(100, ours / e.price * 100)}%"></i></div></div>
+    <div class="fact"><b>${ours >= e.price ? "Worth a ticket" : lei(e.breakeven)}</b><span>${ours >= e.price
+      ? "A ticket now pays back more than it costs on average, before tax."
+      : "Jackpot at which a typical ticket pays for itself, counting the chance of sharing it"}</span></div>
+    <div class="fact"><b>${fmt((top.keep ?? e.keep_avg) * 100, 1)}%</b><span>Share of the jackpot ticket #1 would keep on average, vs ${fmt(e.keep_avg * 100, 1)}% for a typical ticket. About ${fmt(e.lines)} lines are sold per draw.</span></div>`
+    : `<p class="muted">Prize data not available yet. It is read from loto.ro on each update.</p>`;
+
+  board(g);
+  systems(g);
+  bundleSoon(g);
+  track(g);
+  popularity(g);
+
+  // backtest
+  const bt = g.backtest, tests = Object.keys(bt.models).length * Object.keys(D.games).length;
+  const ranked = Object.entries(bt.models).sort((x, y) => y[1].hits - x[1].hits);
+  const span = Math.max(...ranked.map(([, m]) => m.llr != null ? Math.abs(m.llr) + 2 * m.se : 0), 5);
+  const o = bt.oos;
+  $("#btLede").innerHTML = `Every system below predicted all ${fmt(bt.draws)} past draws one at a time, seeing only the draws before each one and playing one ticket.
+    They range from classic tips (hot, cold, overdue, repeat last draw) to methods people rarely think of: Fourier cycle detection, a machine-learning model that keeps learning,
+    and a universal pattern learner that would find any repeating structure in each number's history. A random ticket is included as the baseline.
+    With ${tests} systems tested across the three games, some will look lucky, so a system only counts as beating chance if it survives that correction.`;
+  $("#bt").innerHTML = `<tr><th>System</th><th class="num">Avg. hits</th><th class="num">Won a prize</th><th>Explains the draws better than chance?</th></tr>` +
+    ranked.map(([name, m]) => {
+      const padj = Math.min(1, m.p * tests);
+      let verdict = padj < 0.05 ? (m.z > 0 ? "beats chance" : "worse than chance") : "hits like chance";
+      if (m.llr != null && m.llr + 2 * m.se < 0) verdict += ", and its probabilities fit the draws worse than chance";
+      else if (m.llr != null && m.llr - 2 * m.se > 0) verdict += ", probabilities fit slightly better than chance";
+      let bar = "";
+      if (m.llr != null) {
+        const lo = Math.max(-span, m.llr - 2 * m.se), hi = Math.min(span, m.llr + 2 * m.se), pct = v => 50 + v / span * 50;
+        bar = `<div class="zero" role="img" aria-label="score ${m.llr}"><i class="${hi < 0 ? "neg" : ""}" style="left:${pct(lo)}%;width:${Math.max(1, pct(hi) - pct(lo))}%"></i></div>`;
+      }
+      return `<tr><td>${name}</td><td class="num">${fmt(m.hits, 3)}</td><td class="num">${fmt(m.prize * 100, 2)}%</td>
+        <td>${bar}<small class="muted">${verdict}</small></td></tr>`;
+    }).join("") +
+    `<tr><td><b>Pure chance</b></td><td class="num"><b>${fmt(bt.expected_hits, 3)}</b></td><td class="num"><b>${fmt(bt.p_prize * 100, 2)}%</b></td><td></td></tr>`;
+  $("#btOos").innerHTML = `Out-of-sample check: the system that did best on the first half of history (${o.model}) was then tested on the second half.
+    Its score went from ${fmt(o.first, 2)} to ${fmt(o.second, 2)}, and hits from ${fmt(o.hits_first, 3)} to ${fmt(o.hits_second, 3)} per ticket, against ${fmt(bt.expected_hits, 3)} for chance.
+    An edge that was real would have held up.`;
+
+  // fairness
+  const f = g.fairness, verdict = p => p < 0.01 ? "unusually uneven, worth watching" : "consistent with a fair draw";
+  $("#fair").innerHTML = `A chi-square test asks whether the ball counts are more uneven than luck alone would make them.
+    All ${fmt(g.total)} draws: p = ${f.all.p}, ${verdict(f.all.p)}. Last 500 draws: p = ${f.recent.p}, ${verdict(f.recent.p)}.
+    ${f.extra ? `Joker ball: p = ${f.extra.p}, ${verdict(f.extra.p)}.` : ""} Values below 0.01 would hint at a biased machine.`;
+  const st = g.structure;
+  if (st) $("#fair").innerHTML += `<br><br>Two deeper searches for hidden structure, each compared against ${st.sims} simulated fair lotteries:
+    does one draw carry information about the next (overlap test, p = ${st.overlap_p}${st.overlap_p < 0.05 ? ", borderline, but expected once in a while across this many tests" : ""}),
+    and do any numbers travel together (random matrix theory: the strongest correlation pattern scores ${fmt(st.eig, 3)}, fair lotteries give ${fmt(st.null_lo, 3)}–${fmt(st.null_hi, 3)}).
+    ${st.eig <= st.null_hi ? "Both look like pure noise." : "The correlation pattern is stronger than the simulations: worth watching."}`;
+  $("#split").innerHTML = g.odd_split.map(s => `<div><span>${s.k} odd</span>
+    <span class="bar" role="img" aria-label="seen ${fmt(s.seen * 100, 1)}%, expected ${fmt(s.theory * 100, 1)}%"><i style="width:${s.seen * 250}%"></i><u style="left:${s.theory * 250}%"></u></span>
+    <span class="num">${fmt(s.seen * 100, 1)}%</span></div>`).join("") + `<p class="muted" style="font-size:.85rem">Bar is what happened; the line is what pure chance predicts.</p>`;
+  $("#pairs").innerHTML = g.pairs.top.slice(0, 6).map(p => `${p.a} & ${p.b}: ${p.count}×`).join(", ") +
+    `. Any given pair is expected about ${g.pairs.expected} times. With ${fmt(g.n * (g.n - 1) / 2)} pairs, a few always land this high by chance.`;
+
+  // checker
+  $("#checkLede").textContent = g.extra
+    ? `Type your ${g.pick} numbers (1–${g.n}) and the Joker (1–${g.extra}) last. We check them against all ${fmt(g.total)} draws since ${g.first.slice(0, 4)}.`
+    : `Type your ${g.pick} numbers (1–${g.n}). We check them against all ${fmt(g.total)} draws since ${g.first.slice(0, 4)}.`;
+  $("#mine").placeholder = g.extra ? "e.g. 4 11 23 38 42 + 7" : g.pick === 6 ? "e.g. 4 11 23 31 38 42" : "e.g. 4 11 23 31 38";
+  $("#checkOut").innerHTML = "";
+
+  // latest
+  $("#ann").innerHTML = D.announcements.length ? `<p class="muted">Special draws announced by Loteria Română:</p><ul>${D.announcements.map(a =>
+    `<li><a href="${a.url}" target="_blank" rel="noopener">${a.title}</a> <span class="muted">(${a.date})</span></li>`).join("")}</ul>` : "";
+  $("#draws").innerHTML = g.history.slice(-8).reverse().map(([d, seq, nums, x]) =>
+    `<div class="row"><time>${d}${seq > 1 ? " (2nd)" : ""}</time><div class="balls">${(key === "540" ? nums : [...nums].sort((a, b) => a - b))
+      .map((v, i) => ball(v, key === "540" && i === 5 ? "dim" : "")).join("")}${x ? ball(x, "extra") : ""}</div></div>`).join("") +
+    (key === "540" ? `<p class="muted" style="font-size:.85rem">In draw order. The faded sixth ball counts for categories II and III only; the jackpot needs your 5 to be the first 5.</p>` : "");
+  $("#foot").innerHTML = `Draw history from loto49.ro, jackpots and announcements from loto.ro. Prices assumed: ${g.price} lei per line.
+    Lottery draws are random: nothing on this page predicts numbers, and the expected return of every ticket is below its price unless the jackpot value above says otherwise.`;
+}
+
+const popWord = m => m < 1 ? `${fmt(1 / m, 1)}× fewer people play it than a typical ticket` : `${fmt(m, 1)}× more people play it than a typical ticket`;
+
+function best(g) {
+  const t = g.picks[0], e = g.ev, p = g.popularity;
+  const stats = [`<div><b>1 in ${fmt(1 / g.p_jackpot)}</b><span>Jackpot chance. The same for every ticket, this one included.</span></div>`];
+  if (t.mult != null) stats.push(`<div><b>${t.mult < 1 ? `${fmt(1 / t.mult, 1)}× fewer` : `${fmt(t.mult, 1)}× more`}</b><span>people hold this combination than a typical ticket, so prizes are split fewer ways</span></div>`);
+  if (t.ev != null && e) stats.push(`<div><b>${lei(t.ev)} of ${g.price} lei</b><span>paid back on average across all prizes, vs ${lei(e.ev_avg)} for a typical ticket. Still below the price.</span></div>`);
+  if (t.keep != null) stats.push(`<div><b>${fmt(t.keep * 100, 1)}%</b><span>of the jackpot you would keep on average if it hits</span></div>`);
+  $("#best").innerHTML = `<h2>Strongest ticket for this draw</h2>
+    <div class="balls">${t.nums.map((x, j) => ball(x, "", j)).join("")}${t.extra ? ball(t.extra, "extra", 6) : ""}</div>
+    <div class="stats">${stats.join("")}</div>`;
+  const ev = p && p.evidence;
+  $("#why").innerHTML = `<h3>Why a ticket other people avoid?</h3>
+    <p>No maths can make a combination more likely to be drawn. Every one has the same chance. What maths can change is how much you get when you win.</p>
+    <p>Prizes are split between everyone who matches. Players crowd onto birthdays (1–31), lucky numbers like 7 and 13, and patterns on the slip.
+      Pick what they avoid and you match the same balls, but share the pot with fewer people.
+      ${p && p.reliable ? "Which numbers are crowded is measured from official winner counts, not guessed." : ""}</p>
+    ${ev ? `<p>Real ${g.name} draws show it. In the last ${ev.draws} draws, matching 4 numbers paid:</p>
+      <div class="compare"><span>Least popular numbers drawn</span><i style="width:100%"></i><b>${lei(ev.low)}</b>
+        <span>Most popular numbers drawn</span><i class="lo" style="width:${ev.high / ev.low * 100}%"></i><b>${lei(ev.high)}</b></div>
+      <p class="muted" style="font-size:.9rem">Median prize per winner, comparing the quarter of draws with the least popular numbers against the quarter with the most.</p>` : ""}`;
+}
+function ticket(t, i, g) {
+  const f = [];
+  if (t.mult != null) f.push(popWord(t.mult));
+  if (t.ev != null) f.push(`pays back <b>${lei(t.ev)}</b> per ${g.price} lei on average`);
+  if (t.trend != null) f.push(`trend score <b>${t.trend > 0 ? "+" : ""}${fmt(t.trend)}</b>`);
+  if (t.pop != null && t.mult == null) f.push("rarely picked (first model)");
+  return `<div class="ticket"><span class="rank">#${i + 1}</span><div class="balls">${t.nums.map((x, j) => ball(x, "", i < 10 ? j : 0)).join("")}${t.extra ? ball(t.extra, "extra", 6) : ""}</div>
+    <span class="facts2">${f.map(x => `<span>${x}</span>`).join("")}</span></div>`;
+}
+
+function systems(g) {
+  const sizes = Object.keys(g.systems || {});
+  $("#sysLede").textContent = `Every system lets you mark more than ${g.pick} numbers; the ticket then plays every ${g.pick}-number line among them, so the price climbs fast.
+    More lines means more chances, never better odds per leu. Shown: the strongest ticket for each size, by payback per leu.${g.extra ? " One Joker number per ticket here." : ""}`;
+  const strongest = k => [...g.systems[k]].sort((a, b) => (b.ev || 0) / b.cost - (a.ev || 0) / a.cost)[0];
+  $("#sys").innerHTML = sizes.map(k => [k, strongest(k)]).map(([k, t]) => `<div class="ticket"><span class="rank">${k} numbers</span>
+    <div class="balls">${t.nums.map(x => ball(x)).join("")}${t.extra ? ball(t.extra, "extra") : ""}</div>
+    <span class="facts2"><span><b>${fmt(t.cost)} lei</b> for ${fmt(t.lines)} lines</span>
+      <span>jackpot <b>1 in ${fmt(1 / t.p_jackpot)}</b></span><span>any prize <b>${fmt(t.p_any * 100, 1)}%</b></span>
+      ${t.ev != null ? `<span>pays back <b>${lei(t.ev)}</b> on average (${fmt(t.ev / t.cost * 100)}%)</span>` : ""}</span></div>`).join("")
+    + `<p class="muted" style="font-size:.9rem">A single ${g.price} lei line: jackpot 1 in ${fmt(1 / g.p_jackpot)}, any prize ${fmt(g.p_any * 100, 1)}%.</p>`;
+}
+
+// ---- bundle simulator: exact jackpot odds and average, simulated spread of everything else
+const comb = (a, b) => b < 0 || b > a ? 0 : (() => { let r = 1; for (let i = 1; i <= b; i++) r = r * (a - b + i) / i; return r; })();
+function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function spreadTickets(n, k, T, rnd) {   // shuffled-deck spread: every number used about equally, low overlap
+  let best = null;
+  for (let a = 0; a < 80; a++) {
+    let deck = [], sets = [];
+    while (sets.length < T) {
+      const s = new Set();
+      while (s.size < k) {
+        if (!deck.length) { deck = Array.from({ length: n }, (_, i) => i + 1); for (let i = n - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; } }
+        s.add(deck.pop());
+      }
+      sets.push([...s].sort((x, y) => x - y));
+    }
+    let ov = 0;
+    for (let i = 0; i < T; i++) for (let j = i + 1; j < T; j++) ov = Math.max(ov, sets[i].filter(x => sets[j].includes(x)).length);
+    if (!best || ov < best[0]) best = [ov, sets];
+  }
+  return best[1];
+}
+function* kCombos(arr, r, start = 0, acc = []) {
+  if (acc.length === r) { yield acc; return; }
+  for (let i = start; i <= arr.length - (r - acc.length); i++) yield* kCombos(arr, r, i + 1, [...acc, arr[i]]);
+}
+const popc = v => { v -= (v >>> 1) & 0x55555555; v = (v & 0x33333333) + ((v >>> 2) & 0x33333333); return (((v + (v >>> 4)) & 0x0F0F0F0F) * 0x01010101) >>> 24; };
+const maskOf = arr => { let lo = 0, hi = 0; for (const x of arr) x < 32 ? lo |= 1 << x : hi |= 1 << (x - 32); return [lo >>> 0, hi >>> 0]; };
+const sampleNums = (n, r, rnd) => { const s = new Set(); while (s.size < r) s.add(1 + Math.floor(rnd() * n)); return [...s].sort((a, b) => a - b); };
+const lineCache = {}, simCache = {};
+let bundleTimer;
+function bundleSoon(g) {   // heavy simulation: let the page paint first
+  $("#bOut").innerHTML = `<p class="muted">Calculating…</p>`;
+  clearTimeout(bundleTimer);
+  bundleTimer = setTimeout(() => bundle(g), 30);
+}
+function bundleLines(g, T, k, mode) {   // every line actually played, plus its Joker
+  const id = [key, T, k, mode].join(":");
+  if (lineCache[id]) return lineCache[id];
+  const { n, pick, extra: xn } = g, rnd = mulberry32(T * 97 + k + (mode === "spread" ? 7 : 0));
+  let lines = [], jokers = [];
+  if (mode === "system") {
+    spreadTickets(n, k, T, rnd).forEach((t, i) => { for (const c of kCombos(t, pick)) { lines.push([...c]); jokers.push(xn ? (i % xn) + 1 : null); } });
+  } else {  // greedy covering design: each new line overlaps already-covered winning subsets as little as possible
+    const t = { "649": 3, "540": 4, joker: 3 }[key], covered = new Set(), L = T * comb(k, pick);
+    for (let i = 0; i < L; i++) {
+      let best = null, bestSc = 1e9;
+      for (let c = 0; c < 30 && bestSc; c++) {
+        const line = sampleNums(n, pick, rnd);
+        let sc = 0;
+        for (const sub of kCombos(line, t)) if (covered.has(sub.join(","))) sc++;
+        if (sc < bestSc) { best = line; bestSc = sc; }
+      }
+      for (const sub of kCombos(best, t)) covered.add(sub.join(","));
+      lines.push(best); jokers.push(xn ? (i % xn) + 1 : null);
+    }
+  }
+  return lineCache[id] = { lines, jokers, masks: lines.map(maskOf) };
+}
+function simulateLines(g, L, P, N, rnd) {
+  const { n, drawn: d } = g, out = new Float64Array(N), pool = Array.from({ length: n }, (_, i) => i + 1);
+  for (let s = 0; s < N; s++) {
+    for (let i = 0; i < d; i++) { const j = i + Math.floor(rnd() * (n - i)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    const [lo, hi] = maskOf(pool.slice(0, d)), [lo5, hi5] = maskOf(pool.slice(0, 5));
+    const jd = g.extra ? 1 + Math.floor(rnd() * g.extra) : null;
+    let won = 0;
+    for (let i = 0; i < L.masks.length; i++) {
+      const [a, b] = L.masks[i], h = popc(a & lo) + popc(b & hi);
+      if (h < 1) continue;
+      const bonus = key === "540" ? popc(a & lo5) + popc(b & hi5) === 5 : L.jokers[i] === jd;
+      const c = category(key, h, bonus);
+      if (c) won += c === "I" ? P.I : P[c] || 0;
+    }
+    out[s] = won;
+  }
+  return out;
+}
+
+function bundle(g) {
+  const sizes = Array.from({ length: 5 }, (_, i) => g.pick + i);
+  const prevK = +$("#bK").value;
+  $("#bK").innerHTML = sizes.map(k => `<option value="${k}">${k}${k === g.pick ? " (single line)" : ""}</option>`).join("");
+  $("#bK").value = sizes.includes(prevK) ? prevK : sizes[sizes.length - 1];
+  const T = Math.max(1, Math.min(50, Math.round(+$("#bT").value) || 1)), k = +$("#bK").value;
+  const P = g.ev && g.ev.prizes;
+  if (!P) { $("#bOut").innerHTML = `<p class="muted">Needs the official prize data, which loads with the next update.</p>`; return; }
+  const { n, drawn: d, pick, extra: xn } = g, mode = $("#bM").value;
+  const linesPer = comb(k, pick), lines = T * linesPer, cost = lines * g.price;
+  const mean = lines * Object.entries(g.odds).reduce((a, [c, o]) => a + (P[c] || 0) / o, 0);  // exact by linearity
+  const sys = bundleLines(g, T, k, "system"), spr = lines <= 6000 ? bundleLines(g, T, k, "spread") : null;
+  const cur = mode === "spread" && spr ? spr : sys;
+  const N = 10000, outs = simCache[[key, T, k]] ||= {}, rnd = mulberry32(T * 31 + k);
+  for (const [name, L] of [["system", sys], ["spread", spr]]) if (L && !outs[name]) outs[name] = simulateLines(g, L, P, N, rnd);
+  const out = outs[mode === "spread" && spr ? "spread" : "system"];
+  const anyP = o => o.reduce((a, w) => a + (w > 0 ? 1 : 0), 0) / N;
+  const distinct = new Set(cur.lines.map((l, i) => l.join(",") + "|" + cur.jokers[i]));
+  const pJack = distinct.size / (comb(n, pick) * (xn || 1));
+  $("#bCompare").innerHTML = k === pick ? "" : spr
+    ? `Same ${fmt(lines)} lines, same cost, same jackpot odds and same average either way. But the chance of winning <b>any</b> prize in a draw:
+       <b>${fmt(anyP(outs.system) * 100, 1)}%</b> as ${T} system ticket${T > 1 ? "s" : ""}, <b>${fmt(anyP(outs.spread) * 100, 1)}%</b> as separate lines spread out.
+       System tickets bunch their lines on the same few numbers, so they win rarely but in clusters. Spreading the lines (a covering design) wins small prizes far more often.`
+    : `Too many lines to lay out separately here.`;
+  const sorted = Float64Array.from(out).sort(), median = sorted[N >> 1];
+  const share = f => out.reduce((a, w) => a + (f(w) ? 1 : 0), 0) / N;
+  const J = P.I * 0.5;  // anything above half the jackpot is a jackpot draw
+  const rows = [
+    ["Nothing back", "", share(w => w === 0)],
+    ["Under a quarter back", `up to ${lei(cost / 4)}`, share(w => w > 0 && w < cost / 4)],
+    ["A quarter to half back", `${lei(cost / 4)} – ${lei(cost / 2)}`, share(w => w >= cost / 4 && w < cost / 2)],
+    ["Half to all back", `${lei(cost / 2)} – ${lei(cost)}`, share(w => w >= cost / 2 && w < cost)],
+    ["More than you paid", "without the jackpot", share(w => w >= cost && w < J)],
+  ];
+  const ahead = rows[4][2] + pJack, maxS = Math.max(...rows.map(r => r[2]));
+  $("#bOut").innerHTML = `<div class="outcome-head">
+      <div><b>${lei(cost)}</b><span>${T} ticket${T > 1 ? "s" : ""} × ${fmt(linesPer)} line${linesPer > 1 ? "s" : ""} = ${fmt(lines)} lines${lines > distinct.size ? `, ${fmt(lines - distinct.size)} duplicated` : ""}</span></div>
+      <div><b>${lei(median)}</b><span>back in a typical draw (median)</span></div>
+      <div><b>${lei(mean)}</b><span>back on average. The rare big wins pull this above the typical draw.</span></div>
+      <div><b>${ahead >= 0.01 ? `${fmt(ahead * 100, 1)}%` : `1 in ${fmt(1 / ahead)}`}</b><span>of draws leave you ahead</span></div>
+    </div>
+    <div class="spread" role="table" aria-label="Share of draws by money back">
+      ${rows.map(([l, sub, v]) => `<div class="row${l.startsWith("More") ? " ahead" : ""}" role="row" title="${l}: ${fmt(v * 100, 1)}% of draws">
+        <span class="lab" role="cell">${l}${sub ? `<small>${sub}</small>` : ""}</span>
+        <span class="track" role="cell"><i style="width:${v / maxS * 100}%"></i></span>
+        <span class="pct" role="cell">${v > 0 && v < 0.001 ? "<0.1" : fmt(v * 100, 1)}%</span></div>`).join("")}
+      <div class="row ahead" role="row"><span class="lab" role="cell">Jackpot<small>${lei(P.I)}</small></span><span class="track" role="cell"></span>
+        <span class="pct" role="cell">1 in ${fmt(1 / pJack)}</span></div>
+    </div>
+    <p class="muted" style="font-size:.88rem;margin-top:16px">Showing: ${mode === "spread" && spr ? "separate lines, spread out" : "system tickets"}. Uses typical recent payouts, as if your numbers were as popular as anyone's.
+      Jackpot odds and the average are exact; the spread is simulated over ${fmt(N)} draws. Which numbers you choose doesn't change any of these odds, as long as lines don't repeat.</p>`;
+}
+
+function prereg(g) {
+  const c = g.candidate, r = g.track && g.track.candidate;
+  if (!c) { $("#prereg").innerHTML = ""; return; }
+  $("#prereg").innerHTML = `<h3>Pre-registered test: ${c.rule.toLowerCase()}</h3>
+    <p>A search of about 25,000 hypotheses across the three games found nothing that survived testing on unseen draws. The one lead:
+      on 5/40, tickets built from the numbers drawn most often over the last ~50 draws beat chance in both halves of history and in the holdout,
+      though each time within what luck explains. Mining the past more can't settle that, so the rule is fixed since ${c.registered} and its ticket
+      is saved before every draw. Only future draws count.</p>
+    <div class="balls">${c.nums.map(x => ball(x)).join("")}</div>
+    <p class="muted">${r ? `Scored so far: ${fmt(r.draws)} draw${r.draws > 1 ? "s" : ""}, ${fmt(r.hits, 3)} hits per ticket vs ${fmt(r.chance, 3)} for chance (z ${r.z > 0 ? "+" : ""}${fmt(r.z, 2)}).
+      It needs about 3 sustained over a few hundred draws to mean anything.` : "No draws scored yet. This draw's ticket is above."}
+      Not a recommendation: it is played on paper only.</p>`;
+}
+
+function lab(g) {
+  const L = g.lab, live = g.track && g.track.lab;
+  if (!L) { $("#lab").innerHTML = ""; return; }
+  const step = (label, v, cls = "") => `<span>${label}</span><i class="${cls}" style="width:${Math.min(100, v / 1.3 * 100)}%"></i><b>${fmt(v, 2)}×</b>`;
+  $("#lab").innerHTML = `<h3>Formula Lab</h3>
+    <p>An evolutionary search writes its own formulas from the draw's date and the previous two draws, then breeds and mutates thousands of them.
+      It learned for three rounds on the oldest 60% of draws, keeping only formulas that also worked on the next 20%, and was tested once on the newest 20%.</p>
+    <div class="lab-steps">${step("Learning (training draws)", L.train)}${step("Selection (validation draws)", L.val)}${step("Final test (unseen draws)", L.test, "test")}</div>
+    <p class="muted" style="font-size:.88rem">How often the formulas' numbers were drawn, relative to chance (1.00×). On the final test the ticket averaged
+      ${fmt(L.test_hits, 3)} hits per draw vs ${fmt(L.chance_hits, 3)} for chance, over ${fmt(L.test_draws)} draws.</p>
+    <p>Its strongest formulas:</p>
+    <ol class="formulas">${L.formulas.map(f => `<li>${f}</li>`).join("")}</ol>
+    <p>Ticket for this draw:</p>
+    <div class="balls">${L.nums.map(x => ball(x)).join("")}</div>
+    <p class="muted">${live ? `Live since ${L.evolved}: ${fmt(live.draws)} draw${live.draws > 1 ? "s" : ""}, ${fmt(live.hits, 3)} hits per ticket vs ${fmt(live.chance, 3)} for chance (z ${live.z > 0 ? "+" : ""}${fmt(live.z, 2)}).`
+      : `Live scoring starts with this draw. Re-run <code>python3 lab.py</code> any time to evolve a new generation.`} Played on paper only.</p>`;
+}
+
+function track(g) {
+  prereg(g);
+  lab(g);
+  const t = g.track, nxt = day(D.next_draws[0]);
+  if (!t || !t.dates.length) {
+    $("#trackLede").textContent = `Nothing scored yet. Picks are saved before each draw and checked here as soon as the results are published. Next: ${nxt}.`;
+    $("#trackSum").innerHTML = $("#trackTrend").innerHTML = $("#track").innerHTML = "";
+    return;
+  }
+  $("#trackLede").textContent = `Every saved pick, scored against the actual draw with the official payout for that draw. ${t.dates.length} draw${t.dates.length > 1 ? "s" : ""} so far.`;
+  const label = { 1: "Top pick only", 5: "Top 5", 10: "Top 10", 100: "All 100 saved" };
+  $("#trackSum").innerHTML = `<tr><th>If you had played</th><th class="num">Lines</th><th class="num">Cost</th><th class="num">Won</th><th>Prizes</th></tr>` +
+    Object.entries(t.summary).map(([k, v]) => `<tr><td>${label[k] || k}</td><td class="num">${fmt(v.lines)}</td><td class="num">${lei(v.cost)}</td>
+      <td class="num">${lei(v.won)}</td><td>${Object.entries(v.wins).map(([c, n]) => `${n}× cat. ${c}`).join(", ") || "none"}</td></tr>`).join("");
+  $("#trackTrend").innerHTML = t.trend
+    ? `Our trend score: lines in the top third averaged ${fmt(t.trend.high, 3)} hits, the bottom third ${fmt(t.trend.low, 3)}; chance is ${fmt(t.trend.chance, 3)} (${fmt(t.trend.lines)} lines).`
+    : `Our trend score needs about 30 scored lines before it says anything.`;
+  $("#track").innerHTML = t.dates.slice(0, 12).map(e => {
+    const best = Math.max(0, ...e.tickets.map(x => x.hits)), won = e.tickets.reduce((a, x) => a + x.won, 0);
+    const drawn = e.draws.flatMap(([n]) => n);
+    return `<details><summary><time class="muted">${e.date}</time>${e.draws.map(([n, x]) => `<span class="balls">${n.map(v => ball(v, "", 0)).join("")}${x ? ball(x, "extra") : ""}</span>`).join("")}
+      <span>top 10: best line ${best} hit${best === 1 ? "" : "s"}${won ? `, won ${lei(won)}` : ""}</span></summary>
+      <div class="draws">${e.tickets.map(x => `<div class="row"><time>#${x.rank}${x.cat ? ` cat. ${x.cat}` : ""}</time><div class="balls">${x.nums.map(v => ball(v, drawn.includes(v) ? "" : "dim")).join("")}${x.extra ? ball(x.extra, "extra" + (e.draws.some(([, j]) => j === x.extra) ? "" : " dim")) : ""}</div></div>`).join("")}
+      ${e.systems.map(x => `<div class="row"><time>${x.size} numbers</time><div class="balls">${x.nums.map(v => ball(v, drawn.includes(v) ? "" : "dim")).join("")}</div><span class="muted">${x.won ? `won ${lei(x.won)} on ${lei(x.cost)}` : `no prize (${lei(x.cost)})`}</span></div>`).join("")}</div></details>`;
+  }).join("");
+}
+
+function popularity(g) {
+  const p = g.popularity;
+  if (!p) { $("#popLede").textContent = "Not enough official winner data yet for this game."; $("#popTop").innerHTML = ""; return; }
+  if (!p.reliable) {
+    $("#popLede").textContent = `Fitted on official winner counts of ${fmt(p.draws)} draws since ${p.since}, but it doesn't predict the ${p.holdout} held-back draws
+      (${g.name} has too few winners per draw to learn from). So tickets here only avoid number patterns and last draw's numbers.`;
+    $("#popTop").innerHTML = "";
+    return;
+  }
+  $("#popLede").textContent = `Loteria Română publishes how many tickets won each prize in every draw. When popular numbers are drawn, many more tickets win than sales alone predict.
+    Fitting that across ${fmt(p.draws)} draws since ${p.since} shows how often players pick each number. On the last ${p.holdout} draws, held back from the fit, it explains
+    ${fmt(p.improve * 100)}% of the swings in winner counts. Suggested tickets lean on the least popular numbers.`;
+  const ranked = p.mult.map((m, n) => [n, m]).slice(1).sort((a, b) => b[1] - a[1]);
+  const chip = ([n, m]) => `<span>${n}: ${fmt(m, 2)}×</span>`;
+  $("#popTop").innerHTML = `<p class="muted" style="margin-top:8px">Most picked</p><div class="chips">${ranked.slice(0, 8).map(chip).join("")}</div>
+    <p class="muted" style="margin-top:16px">Least picked</p><div class="chips">${ranked.slice(-8).reverse().map(chip).join("")}</div>
+    ${p.joker_mult ? `<p class="muted" style="margin-top:16px">Joker ball, most picked first</p><div class="chips">${p.joker_mult.map((m, n) => [n, m]).slice(1).sort((a, b) => b[1] - a[1]).map(chip).join("")}</div>` : ""}`;
+}
+
+function board(g) {
+  const T = period === "all" ? g.total : Math.min(100, g.total), p = g.p_ball;
+  const sd = Math.sqrt(T * p * (1 - p)), pop = g.popularity;
+  if (period === "pop" && !(pop && pop.reliable)) period = "all";
+  $("#legend").innerHTML = period === "pop" ? "picked less <i></i> picked more by other players" : "drawn less <i></i> drawn more than chance predicts";
+  $("#boardLede").textContent = `Each number has a ${fmt(p * 100, 1)}% chance of being drawn every time, whatever happened before.
+    Colours show how far its count is from that expectation; anything inside about two standard deviations is ordinary luck.`;
+  $("#board").innerHTML = g.numbers.map(x => {
+    const c = period === "all" ? x.count : x.recent;
+    const z = period === "pop" ? Math.log(pop.mult[x.n]) * 8 : (c - T * p) / sd;
+    const mix = Math.min(45, Math.abs(z) * 18);  // capped so the ink stays readable
+    const cell = `color-mix(in oklab, ${z > 0 ? "var(--game)" : "var(--cold)"} ${mix}%, var(--sheet))`;
+    return `<button style="--cell:${cell}" data-n="${x.n}" aria-pressed="${sel === x.n}" aria-label="Number ${x.n}, drawn ${c} times">
+      <span><b>${x.n}</b><br><small>${period === "pop" ? fmt(pop.mult[x.n], 2) : c}×</small></span></button>`;
+  }).join("");
+  $("#board").querySelectorAll("button").forEach(b => b.onclick = () => { sel = +b.dataset.n; board(g); });
+  const x = g.numbers.find(v => v.n === sel) || g.numbers.reduce((a, b) => (b.gap > a.gap ? b : a));
+  const z = ((period === "recent" ? x.recent : x.count) - T * p) / sd;
+  $("#detail").innerHTML = `${ball(x.n, "", 0)}
+    <dl><dt>Drawn</dt><dd>${fmt(x.count)}× all time</dd>
+      <dt>Last 100 draws</dt><dd>${x.recent}× (chance: ${fmt(Math.min(100, g.total) * p, 1)})</dd>
+      <dt>Draws since last seen</dt><dd>${x.gap}</dd>
+      <dt>Longest absence</dt><dd>${x.max_gap}</dd>
+      <dt>Distance from chance</dt><dd>${fmt(z, 1)} sd</dd>
+      <dt>Chance next draw</dt><dd>${fmt(p * 100, 2)}%</dd>
+      ${pop ? `<dt>Picked by players</dt><dd>${fmt(pop.mult[x.n], 2)}× average</dd>` : ""}</dl>
+    <p class="muted" style="margin-top:12px;font-size:.9rem">${x.gap > 2 / p
+      ? `Missing for ${x.gap} draws happens to any given number ${fmt(x.p_gap * 100, 1)}% of the time. It is not “due”: the balls have no memory.`
+      : `Its long-run rate is ${fmt(x.lo * 100, 1)}–${fmt(x.hi * 100, 1)}% (95% range), which includes the true ${fmt(p * 100, 1)}%.`}</p>`;
+  $("#extraBoard").innerHTML = g.extra_numbers ? `<h3 style="font-size:1.05rem;margin:28px 0 12px">Joker ball (1 in ${g.extra} each draw)</h3>
+    <div class="balls">${g.extra_numbers.map(v => `<span title="drawn ${v.count}×, last seen ${v.gap} draws ago">${ball(v.n, "extra")}<small class="muted" style="display:block;text-align:center">${v.count}</small></span>`).join("")}</div>` : "";
+}
+
+document.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
+  period = b.dataset.p;
+  document.querySelectorAll(".seg button").forEach(o => o.setAttribute("aria-pressed", o === b));
+  board(D.games[key]);
+});
+$("#n").oninput = render;
+$("#bT").oninput = $("#bK").onchange = $("#bM").onchange = () => bundleSoon(D.games[key]);
+
+
+$("#check").onsubmit = ev => {
+  ev.preventDefault();
+  const g = D.games[key], v = ($("#mine").value.match(/\d+/g) || []).map(Number);
+  const main = v.slice(0, g.pick), j = g.extra ? v[g.pick] : null;
+  const bad = main.length !== g.pick || new Set(main).size !== g.pick || main.some(x => x < 1 || x > g.n)
+    || (g.extra && !(j >= 1 && j <= g.extra));
+  if (bad) {
+    $("#checkOut").innerHTML = `<p class="err">Enter ${g.pick} different numbers from 1 to ${g.n}${g.extra ? `, then a Joker from 1 to ${g.extra}` : ""}.</p>`;
+    return;
+  }
+  const wins = [], tally = {};
+  for (const [d, seq, nums, x] of g.history) {
+    const hits = main.filter(m => nums.includes(m)).length;
+    const c = category(key, hits, g.extra ? j === x : main.every(m => nums.slice(0, 5).includes(m)));
+    if (c) { tally[c] = (tally[c] || 0) + 1; wins.push([d, seq, nums, x, c]); }
+  }
+  const cats = Object.keys(g.odds);
+  $("#checkOut").innerHTML = `<table><tr><th>Category</th><th class="num">Your wins</th><th class="num">Chance expects</th></tr>${cats.map(c =>
+    `<tr><td>${c}</td><td class="num">${tally[c] || 0}</td><td class="num">${fmt(g.total / g.odds[c], 2)}</td></tr>`).join("")}</table>
+    ${wins.length ? `<p class="muted" style="margin:16px 0 8px">Most recent wins</p><div class="draws">${wins.slice(-5).reverse().map(([d, s, nums, x, c]) =>
+      `<div class="row"><time>${d}</time><div class="balls">${nums.map(n => ball(n, main.includes(n) ? "" : "dim")).join("")}${x ? ball(x, x === j ? "extra" : "extra dim") : ""}</div><b>Cat. ${c}</b></div>`).join("")}</div>`
+      : `<p class="muted" style="margin-top:12px">No prize with these numbers in ${fmt(g.total)} draws.</p>`}`;
+};
+</script>
+</body>
+</html>
