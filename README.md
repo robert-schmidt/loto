@@ -1,6 +1,12 @@
 # Loto odds: 6/49, 5/40, Joker
 
+**Live: https://robert-schmidt.github.io/loto/**
+
 Python stdlib only (3.9+). There's nothing to install.
+
+Hosted on GitHub Pages by [`.github/workflows/update.yml`](.github/workflows/update.yml): it rebuilds on every push
+to `main`, every 15 min on results nights (Thu+Sun) and daily, commits fresh `data.json`/`loto.db`, and deploys.
+Secrets: `TICKETS_JSON` (contents of `tickets.json`), `NTFY_TOPIC`. Pull before pushing: the bot commits too.
 
 ```sh
 python3 loto.py backfill        # once: full history since 1993 -> loto.db, data.json
